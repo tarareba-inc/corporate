@@ -17,30 +17,40 @@ type Deps = {
   send: (ev: EditEvent) => void;
 };
 
+const DRAG_THRESHOLD_PX = 4;
+const DOUBLE_TAP_MS = 350;
+
 const clamp = (v: number, min: number, max: number) =>
   Math.min(max, Math.max(min, v));
+
+function isTouchLike(e: PointerEvent): boolean {
+  return e.pointerType === "touch" || e.pointerType === "pen";
+}
 
 export class Editor {
   private enabled = false;
   private selectedId: string | null = null;
   private rotateHandle: HTMLElement;
   private scaleHandle: HTMLElement;
+  private lastTapId: string | null = null;
+  private lastTapAt = 0;
+  private onReposition = () => this.positionHandles();
+  private onKeyDown = (e: KeyboardEvent) => {
+    if (e.key === "Escape") this.deselect();
+  };
 
   constructor(private deps: Deps) {
     this.rotateHandle = this.createHandle("↻");
     this.scaleHandle = this.createHandle("⤡");
     document.addEventListener("pointerdown", this.onPointerDown, true);
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") this.deselect();
-    });
+    document.addEventListener("keydown", this.onKeyDown);
     for (const [id, el] of deps.elements) {
       el.addEventListener("dblclick", () => this.startTextEdit(id));
     }
     this.setupHandleDrag(this.rotateHandle, "rotate");
     this.setupHandleDrag(this.scaleHandle, "scale");
-    window.addEventListener("scroll", () => this.positionHandles(), {
-      passive: true,
-    });
+    window.addEventListener("scroll", this.onReposition, { passive: true });
+    window.addEventListener("resize", this.onReposition);
   }
 
   enable(): void {
@@ -50,6 +60,16 @@ export class Editor {
   disable(): void {
     this.enabled = false;
     this.deselect();
+  }
+
+  destroy(): void {
+    this.disable();
+    document.removeEventListener("pointerdown", this.onPointerDown, true);
+    document.removeEventListener("keydown", this.onKeyDown);
+    window.removeEventListener("scroll", this.onReposition);
+    window.removeEventListener("resize", this.onReposition);
+    this.rotateHandle.remove();
+    this.scaleHandle.remove();
   }
 
   private createHandle(label: string): HTMLElement {
@@ -75,15 +95,34 @@ export class Editor {
     }
     if (target.isContentEditable) return;
     const id = target.dataset.id!;
-    e.preventDefault();
-    if (this.selectedId !== id) {
-      this.select(id);
+
+    if (isTouchLike(e)) {
+      if (this.selectedId !== id) {
+        this.select(id);
+        this.registerTap(id);
+        return;
+      }
+      this.startMoveDrag(e, id, target, () => {
+        if (this.registerTap(id)) this.startTextEdit(id);
+      });
       return;
     }
+
+    if (this.selectedId !== id) this.select(id);
     this.startMoveDrag(e, id, target);
   };
 
+  private registerTap(id: string): boolean {
+    const now = Date.now();
+    const isDoubleTap =
+      this.lastTapId === id && now - this.lastTapAt < DOUBLE_TAP_MS;
+    this.lastTapId = id;
+    this.lastTapAt = isDoubleTap ? 0 : now;
+    return isDoubleTap;
+  }
+
   private select(id: string): void {
+    if (this.selectedId === id) return;
     this.deselect();
     this.selectedId = id;
     const el = this.deps.elements.get(id)!;
@@ -118,11 +157,17 @@ export class Editor {
     this.scaleHandle.style.top = `${r.bottom + 8}px`;
   }
 
-  private startMoveDrag(e: PointerEvent, id: string, el: HTMLElement): void {
+  private startMoveDrag(
+    e: PointerEvent,
+    id: string,
+    el: HTMLElement,
+    onTap?: () => void,
+  ): void {
     const start = this.elState(id);
     const startX = e.clientX;
     const startY = e.clientY;
     const temp = { ...start };
+    let dragging = false;
     try {
       el.setPointerCapture(e.pointerId);
     } catch {
@@ -130,8 +175,15 @@ export class Editor {
     }
 
     const onMove = (ev: PointerEvent) => {
-      temp.x = clamp(start.x + ev.clientX - startX, -MAX_OFFSET, MAX_OFFSET);
-      temp.y = clamp(start.y + ev.clientY - startY, -MAX_OFFSET, MAX_OFFSET);
+      const dx = ev.clientX - startX;
+      const dy = ev.clientY - startY;
+      if (!dragging) {
+        if (Math.hypot(dx, dy) < DRAG_THRESHOLD_PX) return;
+        dragging = true;
+        document.body.classList.add("is-dragging");
+      }
+      temp.x = clamp(start.x + dx, -MAX_OFFSET, MAX_OFFSET);
+      temp.y = clamp(start.y + dy, -MAX_OFFSET, MAX_OFFSET);
       el.style.transform = transformCss(temp);
       this.positionHandles();
     };
@@ -139,6 +191,11 @@ export class Editor {
       el.removeEventListener("pointermove", onMove);
       el.removeEventListener("pointerup", onUp);
       el.removeEventListener("pointercancel", onUp);
+      if (!dragging) {
+        onTap?.();
+        return;
+      }
+      document.body.classList.remove("is-dragging");
       if (temp.x !== start.x || temp.y !== start.y) {
         this.deps.send({ type: "move", target: id, x: temp.x, y: temp.y });
       }

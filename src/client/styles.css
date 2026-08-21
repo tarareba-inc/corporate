@@ -37,6 +37,17 @@ main {
   white-space: pre-wrap;
   transform-origin: center center;
   cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+[data-id][contenteditable] {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+body.is-dragging {
+  cursor: grabbing;
 }
 
 [data-id].is-animating {
