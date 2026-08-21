@@ -1,1 +1,1 @@
-console.log("tarareba");
+import "./styles.css";
