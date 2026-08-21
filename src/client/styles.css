@@ -141,8 +141,15 @@ dt {
 }
 
 .services p,
-.contact p {
+.contact p,
+.repo p {
   max-width: 34rem;
+}
+
+.repo-url {
+  margin-top: 0.75rem;
+  font-weight: 500;
+  color: var(--shu);
 }
 
 .contact-email {

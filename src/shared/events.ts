@@ -18,6 +18,9 @@ export const ELEMENT_IDS = [
   "contact-title",
   "contact-lead",
   "contact-email",
+  "repo-title",
+  "repo-body",
+  "repo-url",
   "footer-copyright",
 ] as const;
 
