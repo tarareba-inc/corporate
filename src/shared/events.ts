@@ -3,7 +3,6 @@ export const ELEMENT_IDS = [
   "hero-mission",
   "hero-lead",
   "about-title",
-  "seal",
   "about-name-label",
   "about-name-value",
   "about-rep-label",

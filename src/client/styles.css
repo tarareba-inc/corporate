@@ -103,28 +103,6 @@ h2 {
   margin-bottom: 1.75rem;
 }
 
-.about-head {
-  position: relative;
-}
-
-.seal {
-  position: absolute;
-  right: 0;
-  top: -0.75rem;
-  width: 3.25rem;
-  height: 3.25rem;
-  border: 3px solid var(--shu);
-  border-radius: 4px;
-  color: var(--shu);
-  font-family: var(--mincho);
-  font-size: 1.9rem;
-  font-weight: 700;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 dl {
   border-top: 1px solid var(--line);
 }
