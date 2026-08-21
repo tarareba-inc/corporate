@@ -39,11 +39,8 @@ export function setupScrubber(deps: Deps): {
 
   range.addEventListener("input", () => {
     const k = Number(range.value);
-    if (k >= deps.events.length) {
-      returnToLive();
-      return;
-    }
     if (!scrubbing) {
+      if (k >= deps.events.length) return;
       scrubbing = true;
       document.body.classList.add("is-scrubbing");
       deps.onScrubStart();
@@ -53,6 +50,10 @@ export function setupScrubber(deps: Deps): {
       deps.defaults,
       foldEvents(deps.events.slice(0, k)),
     );
+  });
+
+  range.addEventListener("change", () => {
+    if (Number(range.value) >= deps.events.length) returnToLive();
   });
 
   const onPointerDown = (e: Event) => {

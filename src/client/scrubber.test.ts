@@ -52,10 +52,27 @@ describe("setupScrubber", () => {
     expect(ends).toBe(0);
   });
 
-  it("スライダーを右端に戻すと自動でライブに復帰する", () => {
+  it("ドラッグ中は右端に達してもスクラブ状態を維持する", () => {
     slide("1");
     slide(String(events.length));
+    slide("1");
+    slide(String(events.length));
+    expect(starts).toBe(1);
+    expect(ends).toBe(0);
+    expect(document.body.classList.contains("is-scrubbing")).toBe(true);
+  });
+
+  it("右端で離すと（changeで）ライブに復帰する", () => {
+    slide("1");
+    slide(String(events.length));
+    range.dispatchEvent(new Event("change", { bubbles: true }));
     expect(ends).toBe(1);
+  });
+
+  it("途中で離しても（changeでも）スクラブ状態を維持する", () => {
+    slide("1");
+    range.dispatchEvent(new Event("change", { bubbles: true }));
+    expect(ends).toBe(0);
   });
 
   it("スクラブ中にスクラバー外をクリックするとライブに復帰する", () => {
