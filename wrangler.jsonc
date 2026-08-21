@@ -16,6 +16,6 @@
       "migrations_dir": "migrations"
     }
   ],
-  "routes": [{ "pattern": "corp.tarareba.com", "custom_domain": true }],
+  "routes": [{ "pattern": "corp.tarareba.com/*", "zone_name": "tarareba.com" }],
   "observability": { "enabled": true }
 }
