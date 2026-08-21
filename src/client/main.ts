@@ -3,6 +3,7 @@ import type { StoredEvent } from "../shared/events";
 import { applyEvent, foldEvents } from "../shared/state";
 import type { WorldState } from "../shared/state";
 import { captureDefaults, collectElements, renderTarget, renderWorld } from "./dom";
+import { Editor } from "./editor";
 import { runReplay } from "./replay";
 import { connectWorld } from "./ws";
 
@@ -56,7 +57,13 @@ async function boot(): Promise<void> {
       }
     }
   });
-  void send;
+
+  const editor = new Editor({
+    elements,
+    defaults,
+    getState: () => state,
+    send,
+  });
 
   const history: StoredEvent[] = await fetch("/api/events").then((r) =>
     r.json(),
@@ -94,6 +101,7 @@ async function boot(): Promise<void> {
 
   state = foldEvents(events);
   renderWorld(elements, defaults, state);
+  editor.enable();
 }
 
 boot();
