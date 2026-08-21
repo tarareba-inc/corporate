@@ -4,6 +4,7 @@ import { applyEvent, foldEvents } from "../shared/state";
 import type { WorldState } from "../shared/state";
 import { captureDefaults, collectElements, renderTarget, renderWorld } from "./dom";
 import { runReplay } from "./replay";
+import { connectWorld } from "./ws";
 
 export type Phase = "replay" | "live" | "scrub";
 
@@ -31,6 +32,31 @@ async function boot(): Promise<void> {
     }
     renderTarget(el, state.get(ev.target), defaults.get(ev.target) ?? "");
   };
+
+  let onEventsGrown = () => {};
+
+  const { send } = connectWorld((m) => {
+    if (m.kind === "event") {
+      if (phase === "replay") {
+        pendingLive.push(m.event);
+        return;
+      }
+      if (events.some((e) => e.id === m.event.id)) return;
+      events.push(m.event);
+      if (phase === "live") {
+        applyStored(m.event, true);
+      } else {
+        applyEvent(state, m.event);
+      }
+      onEventsGrown();
+    } else if (m.kind === "rejected" && m.target) {
+      const el = elements.get(m.target);
+      if (el) {
+        renderTarget(el, state.get(m.target), defaults.get(m.target) ?? "");
+      }
+    }
+  });
+  void send;
 
   const history: StoredEvent[] = await fetch("/api/events").then((r) =>
     r.json(),
