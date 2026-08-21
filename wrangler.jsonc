@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "tarareba-corporate",
+  "main": "src/server/index.ts",
+  "compatibility_date": "2026-08-01",
+  "assets": { "binding": "ASSETS" },
+  "durable_objects": {
+    "bindings": [{ "name": "WORLD", "class_name": "World" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["World"] }],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "tarareba-corporate",
+      "database_id": "610ba984-6e06-4bb6-9e9e-7383f3fc0843",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "routes": [{ "pattern": "corp.tarareba.com/*", "zone_name": "tarareba.com" }],
+  "observability": { "enabled": true }
+}

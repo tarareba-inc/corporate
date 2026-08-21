@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TARAREBA株式会社</title>
+    <meta
+      name="description"
+      content="TARAREBA株式会社のコーポレートサイト。ミッションは「世界を書き換える」。このサイトは、どなたでも書き換えられます。"
+    />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Zen+Old+Mincho:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <main>
+      <header class="hero">
+        <p class="hero-name"><span data-id="hero-name">TARAREBA株式会社</span></p>
+        <h1 class="hero-mission"><span data-id="hero-mission">世界を書き換える。</span></h1>
+        <p class="hero-lead">
+          <span data-id="hero-lead">それが私たちのミッションです。手始めに、このサイトはどなたでも書き換えられるようになっています。テキストも、位置も、ご自由に。</span>
+        </p>
+      </header>
+
+      <section class="about">
+        <h2><span data-id="about-title">会社概要</span></h2>
+        <dl>
+          <div>
+            <dt><span data-id="about-name-label">社名</span></dt>
+            <dd><span data-id="about-name-value">TARAREBA株式会社</span></dd>
+          </div>
+          <div>
+            <dt><span data-id="about-rep-label">代表</span></dt>
+            <dd><span data-id="about-rep-value">板倉悠太</span></dd>
+          </div>
+          <div>
+            <dt><span data-id="about-founded-label">設立</span></dt>
+            <dd><span data-id="about-founded-value">2024年4月</span></dd>
+          </div>
+          <div>
+            <dt><span data-id="about-location-label">所在地</span></dt>
+            <dd><span data-id="about-location-value">東京都渋谷区</span></dd>
+          </div>
+          <div>
+            <dt><span data-id="about-business-label">事業内容</span></dt>
+            <dd><span data-id="about-business-value">ソフトウェア開発など</span></dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="services">
+        <h2><span data-id="services-title">事業内容</span></h2>
+        <p><span data-id="services-body">ソフトウェアの企画・設計・開発。「もしも、こうだったら」を、動くものに変える仕事をしています。</span></p>
+      </section>
+
+      <section class="contact">
+        <h2><span data-id="contact-title">お問い合わせ</span></h2>
+        <p><span data-id="contact-lead">お仕事のご相談は、メールでお気軽にどうぞ。</span></p>
+        <p class="contact-email"><span data-id="contact-email">yuta25@tarareba.com</span></p>
+      </section>
+
+      <section class="repo">
+        <h2><span data-id="repo-title">このサイトについて</span></h2>
+        <p><span data-id="repo-body">ブラウザから書き換えられるほか、ソースコードへの Pull Request も受け付けています。</span></p>
+        <p class="repo-url"><span data-id="repo-url">github.com/tarareba-inc/corporate</span></p>
+      </section>
+
+      <footer>
+        <p><span data-id="footer-copyright">© TARAREBA Inc.</span></p>
+      </footer>
+    </main>
+
+    <div id="replay-hud" hidden>
+      <span id="replay-count"></span>
+      <span class="hud-hint">クリックでスキップ</span>
+    </div>
+    <div id="scrubber" hidden>
+      <input id="scrubber-range" type="range" min="0" value="0" step="1" aria-label="履歴" />
+      <button id="scrubber-live" type="button">現在に戻る</button>
+    </div>
+
+    <script type="module" src="/src/client/main.ts"></script>
+  </body>
+</html>
