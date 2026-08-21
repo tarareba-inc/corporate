@@ -1,7 +1,6 @@
 # corp.tarareba.com
 
-誰でも書き換えられるコーポレートサイト。設計の全容は
-docs/superpowers/specs/2026-08-21-rewritable-corporate-site.md を参照。
+誰でも書き換えられるコーポレートサイト。
 
 - イベントログが唯一の真実。現在の状態は foldEvents の結果で、DB に状態テーブルはない。
 - イベント語彙は setText / move / transform のみ。追加するときは後方互換を保つこと
