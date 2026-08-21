@@ -12,7 +12,10 @@ type Deps = {
   onScrubEnd: () => void;
 };
 
-export function setupScrubber(deps: Deps): { onEventsGrown: () => void } {
+export function setupScrubber(deps: Deps): {
+  onEventsGrown: () => void;
+  destroy: () => void;
+} {
   const box = document.getElementById("scrubber")!;
   const range = document.getElementById("scrubber-range") as HTMLInputElement;
   const liveButton = document.getElementById("scrubber-live")!;
@@ -25,12 +28,26 @@ export function setupScrubber(deps: Deps): { onEventsGrown: () => void } {
   };
   sync();
 
+  const returnToLive = () => {
+    if (!scrubbing) return;
+    scrubbing = false;
+    document.body.classList.remove("is-scrubbing");
+    sync();
+    renderWorld(deps.elements, deps.defaults, deps.getLiveState());
+    deps.onScrubEnd();
+  };
+
   range.addEventListener("input", () => {
+    const k = Number(range.value);
+    if (k >= deps.events.length) {
+      returnToLive();
+      return;
+    }
     if (!scrubbing) {
       scrubbing = true;
+      document.body.classList.add("is-scrubbing");
       deps.onScrubStart();
     }
-    const k = Number(range.value);
     renderWorld(
       deps.elements,
       deps.defaults,
@@ -38,13 +55,21 @@ export function setupScrubber(deps: Deps): { onEventsGrown: () => void } {
     );
   });
 
-  liveButton.addEventListener("click", () => {
+  const onPointerDown = (e: Event) => {
     if (!scrubbing) return;
-    scrubbing = false;
-    sync();
-    renderWorld(deps.elements, deps.defaults, deps.getLiveState());
-    deps.onScrubEnd();
-  });
+    const target = e.target as HTMLElement;
+    if (target.closest?.("#scrubber")) return;
+    returnToLive();
+  };
+  document.addEventListener("pointerdown", onPointerDown, true);
 
-  return { onEventsGrown: sync };
+  liveButton.addEventListener("click", returnToLive);
+
+  return {
+    onEventsGrown: sync,
+    destroy: () => {
+      document.removeEventListener("pointerdown", onPointerDown, true);
+      document.body.classList.remove("is-scrubbing");
+    },
+  };
 }

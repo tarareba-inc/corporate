@@ -30,6 +30,12 @@ main {
   max-width: 41rem;
   margin: 0 auto;
   padding: 7rem 1.5rem 5rem;
+  transition: filter 0.3s ease, opacity 0.3s ease;
+}
+
+body.is-scrubbing main {
+  filter: grayscale(0.6) sepia(0.08);
+  opacity: 0.85;
 }
 
 [data-id] {
@@ -193,6 +199,10 @@ footer {
   border-radius: 999px;
   padding: 0.1rem 0.7rem;
   cursor: pointer;
+}
+
+.editor-handle[hidden] {
+  display: none;
 }
 
 .editor-handle {
