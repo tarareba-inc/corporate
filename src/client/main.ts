@@ -74,7 +74,7 @@ async function boot(): Promise<void> {
   if (history.length > 0) {
     hud.hidden = false;
     hudCount.textContent = `${history.length}回書き換えられた世界`;
-    if (!reducedMotion) await new Promise((r) => setTimeout(r, 600));
+    await new Promise((r) => setTimeout(r, 600));
   }
 
   const { done, skip } = runReplay(
@@ -86,7 +86,6 @@ async function boot(): Promise<void> {
   );
   const onSkip = () => skip();
   document.addEventListener("pointerdown", onSkip);
-  if (reducedMotion) skip();
   await done;
   document.removeEventListener("pointerdown", onSkip);
   hud.hidden = true;
