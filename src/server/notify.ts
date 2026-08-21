@@ -23,6 +23,9 @@ export async function notifyDiscord(
   await fetch(webhookUrl, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ content: formatEventForDiscord(ev) }),
+    body: JSON.stringify({
+      content: formatEventForDiscord(ev),
+      allowed_mentions: { parse: [] },
+    }),
   });
 }

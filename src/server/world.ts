@@ -22,6 +22,18 @@ export class World extends DurableObject<Env> {
     if (request.headers.get("Upgrade") !== "websocket") {
       return new Response("expected websocket", { status: 426 });
     }
+    const origin = request.headers.get("Origin");
+    if (origin) {
+      let originHost: string | null = null;
+      try {
+        originHost = new URL(origin).host;
+      } catch {
+        originHost = null;
+      }
+      if (originHost !== request.headers.get("Host")) {
+        return new Response("forbidden", { status: 403 });
+      }
+    }
     const ip = request.headers.get("CF-Connecting-IP") ?? "unknown";
     const pair = new WebSocketPair();
     this.ctx.acceptWebSocket(pair[1]);
@@ -59,7 +71,12 @@ export class World extends DurableObject<Env> {
       );
       return;
     }
-    const ipHash = await hashIp(ip, this.env.IP_HASH_SALT ?? "");
+    const salt = this.env.IP_HASH_SALT;
+    if (!salt) {
+      ws.send(JSON.stringify({ kind: "rejected", reason: "unavailable" }));
+      return;
+    }
+    const ipHash = await hashIp(ip, salt);
     const stored = await insertEvent(this.env.DB, ev, ipHash, Date.now());
     const out = JSON.stringify({ kind: "event", event: stored });
     for (const client of this.ctx.getWebSockets()) {
