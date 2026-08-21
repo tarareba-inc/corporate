@@ -5,6 +5,7 @@ import type { WorldState } from "../shared/state";
 import { captureDefaults, collectElements, renderTarget, renderWorld } from "./dom";
 import { Editor } from "./editor";
 import { runReplay } from "./replay";
+import { setupScrubber } from "./scrubber";
 import { connectWorld } from "./ws";
 
 export type Phase = "replay" | "live" | "scrub";
@@ -102,6 +103,22 @@ async function boot(): Promise<void> {
   state = foldEvents(events);
   renderWorld(elements, defaults, state);
   editor.enable();
+
+  const scrubber = setupScrubber({
+    events,
+    elements,
+    defaults,
+    getLiveState: () => state,
+    onScrubStart: () => {
+      phase = "scrub";
+      editor.disable();
+    },
+    onScrubEnd: () => {
+      phase = "live";
+      editor.enable();
+    },
+  });
+  onEventsGrown = scrubber.onEventsGrown;
 }
 
 boot();
