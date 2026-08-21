@@ -23,16 +23,16 @@ export class World extends DurableObject<Env> {
       return new Response("expected websocket", { status: 426 });
     }
     const origin = request.headers.get("Origin");
+    let originHost: string | null = null;
     if (origin) {
-      let originHost: string | null = null;
       try {
         originHost = new URL(origin).host;
       } catch {
         originHost = null;
       }
-      if (originHost !== request.headers.get("Host")) {
-        return new Response("forbidden", { status: 403 });
-      }
+    }
+    if (!originHost || originHost !== request.headers.get("Host")) {
+      return new Response("forbidden", { status: 403 });
     }
     const ip = request.headers.get("CF-Connecting-IP") ?? "unknown";
     const pair = new WebSocketPair();
