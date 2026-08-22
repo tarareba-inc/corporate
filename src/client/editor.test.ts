@@ -24,12 +24,13 @@ function pev(
 let editor: Editor;
 let sent: EditEvent[];
 let el: HTMLElement;
+let state: WorldState;
 
 function setup(): void {
   document.body.innerHTML = `<p><span data-id="hero-mission">世界を書き換える。</span></p>`;
   el = document.querySelector<HTMLElement>("[data-id]")!;
   sent = [];
-  const state: WorldState = new Map();
+  state = new Map();
   editor = new Editor({
     elements: new Map([["hero-mission", el]]),
     defaults: new Map([["hero-mission", "世界を書き換える。"]]),
@@ -72,6 +73,62 @@ describe("マウス操作", () => {
       new MouseEvent("dblclick", { bubbles: true, cancelable: true }),
     );
     expect(el.getAttribute("contenteditable")).toBeTruthy();
+  });
+});
+
+describe("viewportクランプ", () => {
+  function fakeSize(): void {
+    Object.defineProperty(el, "offsetWidth", { value: 200 });
+    Object.defineProperty(el, "offsetHeight", { value: 50 });
+  }
+
+  it("viewport外までドラッグしたらクランプ後の値を送る", () => {
+    fakeSize();
+    el.dispatchEvent(pev("pointerdown", 10, 10));
+    el.dispatchEvent(pev("pointermove", 3000, 10));
+    el.dispatchEvent(pev("pointerup", 3000, 10));
+    expect(sent).toEqual([
+      {
+        type: "move",
+        target: "hero-mission",
+        x: window.innerWidth - 200,
+        y: 0,
+      },
+    ]);
+  });
+
+  it("viewport外にある要素はクランプ後の位置からドラッグが始まる", () => {
+    fakeSize();
+    state.set("hero-mission", {
+      text: null,
+      x: 3000,
+      y: 0,
+      scale: 1,
+      rotation: 0,
+    });
+    el.dispatchEvent(pev("pointerdown", 500, 10));
+    el.dispatchEvent(pev("pointermove", 490, 10));
+    el.dispatchEvent(pev("pointerup", 490, 10));
+    expect(sent).toEqual([
+      {
+        type: "move",
+        target: "hero-mission",
+        x: window.innerWidth - 210,
+        y: 0,
+      },
+    ]);
+  });
+
+  it("scaleハンドルで拡大するとはみ出す分をクランプして描画する", () => {
+    fakeSize();
+    el.dispatchEvent(pev("pointerdown", 10, 10));
+    el.dispatchEvent(pev("pointerup", 10, 10));
+    const handle = document.querySelectorAll<HTMLElement>(".editor-handle")[1]!;
+    handle.dispatchEvent(pev("pointerdown", 10, 0));
+    handle.dispatchEvent(pev("pointermove", 40, 0));
+    expect(el.style.transform).toBe(
+      "translate(300px, 75px) rotate(0deg) scale(4)",
+    );
   });
 });
 
