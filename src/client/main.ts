@@ -119,6 +119,10 @@ async function boot(): Promise<void> {
     },
   });
   onEventsGrown = scrubber.onEventsGrown;
+
+  window.addEventListener("resize", () => {
+    if (phase === "live") renderWorld(elements, defaults, state);
+  });
 }
 
 boot();

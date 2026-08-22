@@ -1,4 +1,6 @@
 import type { ElementState, WorldState } from "../shared/state";
+import type { LayoutRect } from "./clamp";
+import { clampedOffset } from "./clamp";
 
 export function collectElements(): Map<string, HTMLElement> {
   const map = new Map<string, HTMLElement>();
@@ -16,6 +18,22 @@ export function captureDefaults(
   return map;
 }
 
+export function viewportWidth(): number {
+  return document.documentElement.clientWidth || window.innerWidth;
+}
+
+export function layoutRect(el: HTMLElement): LayoutRect {
+  let left = 0;
+  let top = 0;
+  let node: HTMLElement | null = el;
+  while (node) {
+    left += node.offsetLeft;
+    top += node.offsetTop;
+    node = node.offsetParent as HTMLElement | null;
+  }
+  return { left, top, width: el.offsetWidth, height: el.offsetHeight };
+}
+
 export function transformCss(s: ElementState): string {
   if (s.x === 0 && s.y === 0 && s.scale === 1 && s.rotation === 0) return "";
   return `translate(${s.x}px, ${s.y}px) rotate(${s.rotation}deg) scale(${s.scale})`;
@@ -28,7 +46,12 @@ export function renderTarget(
 ): void {
   const text = s?.text ?? defaultText;
   if (el.textContent !== text) el.textContent = text;
-  el.style.transform = s ? transformCss(s) : "";
+  if (!s) {
+    el.style.transform = "";
+    return;
+  }
+  const off = clampedOffset(layoutRect(el), s, viewportWidth());
+  el.style.transform = transformCss({ ...s, ...off });
 }
 
 export function renderWorld(
