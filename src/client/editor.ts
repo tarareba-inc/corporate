@@ -8,7 +8,8 @@ import {
 } from "../shared/events";
 import type { ElementState, WorldState } from "../shared/state";
 import { initialElementState } from "../shared/state";
-import { renderTarget, transformCss } from "./dom";
+import { clampedOffset } from "./clamp";
+import { layoutRect, renderTarget, transformCss, viewportWidth } from "./dom";
 
 type Deps = {
   elements: Map<string, HTMLElement>;
@@ -163,7 +164,9 @@ export class Editor {
     el: HTMLElement,
     onTap?: () => void,
   ): void {
-    const start = this.elState(id);
+    const rect = layoutRect(el);
+    const raw = this.elState(id);
+    const start = { ...raw, ...clampedOffset(rect, raw, viewportWidth()) };
     const startX = e.clientX;
     const startY = e.clientY;
     const temp = { ...start };
@@ -184,6 +187,9 @@ export class Editor {
       }
       temp.x = clamp(start.x + dx, -MAX_OFFSET, MAX_OFFSET);
       temp.y = clamp(start.y + dy, -MAX_OFFSET, MAX_OFFSET);
+      const off = clampedOffset(rect, temp, viewportWidth());
+      temp.x = off.x;
+      temp.y = off.y;
       el.style.transform = transformCss(temp);
       this.positionHandles();
     };
@@ -212,6 +218,7 @@ export class Editor {
       e.stopPropagation();
       const id = this.selectedId;
       const el = this.deps.elements.get(id)!;
+      const rect = layoutRect(el);
       const start = this.elState(id);
       const temp = { ...start };
       const r = el.getBoundingClientRect();
@@ -241,7 +248,10 @@ export class Editor {
             MAX_SCALE,
           );
         }
-        el.style.transform = transformCss(temp);
+        el.style.transform = transformCss({
+          ...temp,
+          ...clampedOffset(rect, temp, viewportWidth()),
+        });
         this.positionHandles();
       };
       const onUp = () => {

@@ -38,6 +38,21 @@ describe("renderWorld", () => {
     expect(el.style.transform).toBe("");
   });
 
+  it("viewport外へのmoveはviewport内にクランプして描画する", () => {
+    const elements = collectElements();
+    const defaults = captureDefaults(elements);
+    const el = elements.get("hero-name")!;
+    Object.defineProperty(el, "offsetWidth", { value: 200 });
+    Object.defineProperty(el, "offsetHeight", { value: 50 });
+    const state = foldEvents([
+      { type: "move", target: "hero-name", x: 2000, y: 0 },
+    ]);
+    renderWorld(elements, defaults, state);
+    expect(el.style.transform).toBe(
+      `translate(${window.innerWidth - 200}px, 0px) rotate(0deg) scale(1)`,
+    );
+  });
+
   it("HTML文字列をテキストとして描画する", () => {
     const elements = collectElements();
     const defaults = captureDefaults(elements);
