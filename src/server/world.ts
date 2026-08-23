@@ -7,6 +7,7 @@ import { notifyDiscord } from "./notify";
 
 const MAX_MESSAGE_BYTES = 4096;
 const EDITS_PER_MINUTE = 10;
+const EDITS_PER_MINUTE_GLOBAL = 120;
 const HISTORY_TTL_MS = 10 * 60_000;
 
 async function hashIp(ip: string, salt: string): Promise<string> {
@@ -19,6 +20,10 @@ async function hashIp(ip: string, salt: string): Promise<string> {
 
 export class World extends DurableObject<Env> {
   private limiter = new SlidingWindowLimiter(EDITS_PER_MINUTE, 60_000);
+  private globalLimiter = new SlidingWindowLimiter(
+    EDITS_PER_MINUTE_GLOBAL,
+    60_000,
+  );
   private history = new EventCache(
     () => loadEvents(this.env.DB),
     HISTORY_TTL_MS,
@@ -72,7 +77,8 @@ export class World extends DurableObject<Env> {
     const { ip } = (ws.deserializeAttachment() ?? { ip: "unknown" }) as {
       ip: string;
     };
-    if (!this.limiter.allow(ip, Date.now())) {
+    const now = Date.now();
+    if (!this.limiter.allow(ip, now) || !this.globalLimiter.allow("*", now)) {
       ws.send(
         JSON.stringify({
           kind: "rejected",
