@@ -8,6 +8,7 @@ import { notifyDiscord } from "./notify";
 const MAX_MESSAGE_BYTES = 4096;
 const EDITS_PER_MINUTE = 10;
 const EDITS_PER_MINUTE_GLOBAL = 120;
+const MAX_SOCKETS_PER_IP = 8;
 const HISTORY_TTL_MS = 10 * 60_000;
 
 async function hashIp(ip: string, salt: string): Promise<string> {
@@ -51,8 +52,11 @@ export class World extends DurableObject<Env> {
       return new Response("forbidden", { status: 403 });
     }
     const ip = request.headers.get("CF-Connecting-IP") ?? "unknown";
+    if (this.ctx.getWebSockets(ip).length >= MAX_SOCKETS_PER_IP) {
+      return new Response("too many connections", { status: 429 });
+    }
     const pair = new WebSocketPair();
-    this.ctx.acceptWebSocket(pair[1]);
+    this.ctx.acceptWebSocket(pair[1], [ip]);
     pair[1].serializeAttachment({ ip });
     return new Response(null, { status: 101, webSocket: pair[0] });
   }
