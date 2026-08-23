@@ -3,6 +3,8 @@
 誰でも書き換えられるコーポレートサイト。
 
 - イベントログが唯一の真実。現在の状態は foldEvents の結果で、DB に状態テーブルはない。
+- D1 を直接読むのは World DO の EventCache だけ（起動時と TTL 切れ時）。/api/events や
+  新しい読み出し経路を足すときも D1 を直接 SELECT せず DO 経由にすること（rows_read 対策）。
 - イベント語彙は setText / move / transform のみ。追加するときは後方互換を保つこと
   （古いイベントが validateEvent を通らなくなる変更は履歴を壊す）。
 - テキスト描画は textContent のみ。innerHTML は使わない。
