@@ -39,3 +39,19 @@ describe("SlidingWindowLimiter", () => {
     expect(l.allow("a", 101)).toBe(true);
   });
 });
+
+describe("SlidingWindowLimiter の掃除", () => {
+  it("ウィンドウを過ぎたキーは次の呼び出しで消える", () => {
+    const l = new SlidingWindowLimiter(1, 100);
+    l.allow("a", 0);
+    l.allow("b", 150);
+    expect(l.size).toBe(1);
+  });
+
+  it("ウィンドウ内のキーは消えない", () => {
+    const l = new SlidingWindowLimiter(1, 100);
+    l.allow("a", 50);
+    l.allow("b", 120);
+    expect(l.size).toBe(2);
+  });
+});

@@ -33,6 +33,15 @@ export function rowToStoredEvent(row: EventRow): StoredEvent | null {
   return { ...ev, id: row.id, ts: row.ts };
 }
 
+export async function loadEvents(db: D1Database): Promise<StoredEvent[]> {
+  const { results } = await db
+    .prepare("SELECT id, ts, type, target, payload FROM events ORDER BY id ASC")
+    .all<EventRow>();
+  return results
+    .map(rowToStoredEvent)
+    .filter((e): e is StoredEvent => e !== null);
+}
+
 export async function insertEvent(
   db: D1Database,
   ev: EditEvent,

@@ -10,6 +10,7 @@ TARAREBA株式会社のコーポレートサイト。すべての要素は誰で
 ## モデレーション
 
 編集はすべて D1 の `events` テーブルに追記される。問題のある編集はイベントを消せばその編集だけ歴史から消える。
+履歴は World DO がメモリに持っていて 10 分ごとに D1 から読み直すので、削除は最長 10 分で反映される。すぐ反映したいときは `bun run deploy` で DO を再起動する。
 
 ```bash
 bunx wrangler d1 execute DB --remote --command "SELECT id, ts, type, target, payload FROM events ORDER BY id DESC LIMIT 20"
