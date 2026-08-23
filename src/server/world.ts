@@ -1,11 +1,13 @@
 import { DurableObject } from "cloudflare:workers";
 import { validateEvent } from "../shared/events";
-import { insertEvent } from "./db";
+import { insertEvent, loadEvents } from "./db";
+import { EventCache } from "./history";
 import { SlidingWindowLimiter } from "./limiter";
 import { notifyDiscord } from "./notify";
 
 const MAX_MESSAGE_BYTES = 4096;
 const EDITS_PER_MINUTE = 10;
+const HISTORY_TTL_MS = 10 * 60_000;
 
 async function hashIp(ip: string, salt: string): Promise<string> {
   const data = new TextEncoder().encode(`${salt}:${ip}`);
@@ -17,8 +19,17 @@ async function hashIp(ip: string, salt: string): Promise<string> {
 
 export class World extends DurableObject<Env> {
   private limiter = new SlidingWindowLimiter(EDITS_PER_MINUTE, 60_000);
+  private history = new EventCache(
+    () => loadEvents(this.env.DB),
+    HISTORY_TTL_MS,
+  );
 
   override async fetch(request: Request): Promise<Response> {
+    if (new URL(request.url).pathname === "/api/events") {
+      return Response.json(await this.history.get(Date.now()), {
+        headers: { "cache-control": "no-store" },
+      });
+    }
     if (request.headers.get("Upgrade") !== "websocket") {
       return new Response("expected websocket", { status: 426 });
     }
@@ -78,6 +89,7 @@ export class World extends DurableObject<Env> {
     }
     const ipHash = await hashIp(ip, salt);
     const stored = await insertEvent(this.env.DB, ev, ipHash, Date.now());
+    await this.history.append(stored, Date.now());
     const out = JSON.stringify({ kind: "event", event: stored });
     for (const client of this.ctx.getWebSockets()) {
       try {
