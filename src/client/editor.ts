@@ -28,6 +28,11 @@ function isTouchLike(e: PointerEvent): boolean {
   return e.pointerType === "touch" || e.pointerType === "pen";
 }
 
+// Safariはcompositionendをkeydownより先に発火するのでisComposingが立たない
+function isImeKey(e: KeyboardEvent): boolean {
+  return e.isComposing || e.keyCode === 229;
+}
+
 export class Editor {
   private enabled = false;
   private selectedId: string | null = null;
@@ -37,7 +42,7 @@ export class Editor {
   private lastTapAt = 0;
   private onReposition = () => this.positionHandles();
   private onKeyDown = (e: KeyboardEvent) => {
-    if (e.key === "Escape") this.deselect();
+    if (e.key === "Escape" && !isImeKey(e)) this.deselect();
   };
 
   constructor(private deps: Deps) {
@@ -284,7 +289,7 @@ export class Editor {
     }
     el.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Enter" && !e.shiftKey) {
+      if (e.key === "Enter" && !e.shiftKey && !isImeKey(e)) {
         e.preventDefault();
         el.blur();
       }
