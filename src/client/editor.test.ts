@@ -21,6 +21,23 @@ function pev(
   return e;
 }
 
+function kev(
+  key: string,
+  opts: { isComposing?: boolean; keyCode?: number; shiftKey?: boolean } = {},
+): KeyboardEvent {
+  const e = new KeyboardEvent("keydown", {
+    bubbles: true,
+    cancelable: true,
+    key,
+    isComposing: opts.isComposing,
+    shiftKey: opts.shiftKey,
+  });
+  if (opts.keyCode !== undefined) {
+    Object.defineProperty(e, "keyCode", { value: opts.keyCode });
+  }
+  return e;
+}
+
 let editor: Editor;
 let sent: EditEvent[];
 let el: HTMLElement;
@@ -168,5 +185,28 @@ describe("タッチ操作", () => {
     el.dispatchEvent(pev("pointerup", 40, 30, "touch"));
     expect(el.getAttribute("contenteditable")).not.toBe("plaintext-only");
     expect(sent).toHaveLength(1);
+  });
+});
+
+describe("テキスト編集中のキー操作", () => {
+  beforeEach(() => {
+    el.dispatchEvent(
+      new MouseEvent("dblclick", { bubbles: true, cancelable: true }),
+    );
+  });
+
+  it("Enterで編集を終える", () => {
+    el.dispatchEvent(kev("Enter"));
+    expect(el.getAttribute("contenteditable")).toBe("false");
+  });
+
+  it("IME変換中のEnterでは編集を終えない", () => {
+    el.dispatchEvent(kev("Enter", { isComposing: true }));
+    expect(el.getAttribute("contenteditable")).toBe("plaintext-only");
+  });
+
+  it("keyCode 229のEnterでは編集を終えない", () => {
+    el.dispatchEvent(kev("Enter", { keyCode: 229 }));
+    expect(el.getAttribute("contenteditable")).toBe("plaintext-only");
   });
 });
