@@ -209,4 +209,14 @@ describe("テキスト編集中のキー操作", () => {
     el.dispatchEvent(kev("Enter", { keyCode: 229 }));
     expect(el.getAttribute("contenteditable")).toBe("plaintext-only");
   });
+
+  it("Escapeで選択を解除する", () => {
+    document.dispatchEvent(kev("Escape"));
+    expect(el.classList.contains("is-selected")).toBe(false);
+  });
+
+  it("IME変換中のEscapeでは選択を解除しない", () => {
+    document.dispatchEvent(kev("Escape", { isComposing: true }));
+    expect(el.classList.contains("is-selected")).toBe(true);
+  });
 });

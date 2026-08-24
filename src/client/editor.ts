@@ -42,7 +42,7 @@ export class Editor {
   private lastTapAt = 0;
   private onReposition = () => this.positionHandles();
   private onKeyDown = (e: KeyboardEvent) => {
-    if (e.key === "Escape") this.deselect();
+    if (e.key === "Escape" && !isImeKey(e)) this.deselect();
   };
 
   constructor(private deps: Deps) {
