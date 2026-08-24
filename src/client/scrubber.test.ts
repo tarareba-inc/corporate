@@ -18,6 +18,26 @@ function slide(value: string): void {
   range.dispatchEvent(new Event("input", { bubbles: true }));
 }
 
+function pointer(
+  type: string,
+  target: EventTarget,
+  x = 10,
+  y = 10,
+): void {
+  target.dispatchEvent(
+    new PointerEvent(type, {
+      bubbles: true,
+      isPrimary: true,
+      clientX: x,
+      clientY: y,
+    }),
+  );
+}
+
+function hero(): HTMLElement {
+  return document.querySelector<HTMLElement>("[data-id]")!;
+}
+
 beforeEach(() => {
   document.body.innerHTML = `
     <p><span data-id="hero-mission">世界を書き換える。</span></p>
@@ -75,17 +95,42 @@ describe("setupScrubber", () => {
     expect(ends).toBe(0);
   });
 
-  it("スクラブ中にスクラバー外をクリックするとライブに復帰する", () => {
+  it("スクラブ中にスクラバー外をタップするとライブに復帰する", () => {
     slide("1");
-    document
-      .querySelector("[data-id]")!
-      .dispatchEvent(new Event("pointerdown", { bubbles: true }));
+    pointer("pointerdown", hero(), 10, 10);
+    pointer("pointerup", hero(), 10, 10);
     expect(ends).toBe(1);
   });
 
-  it("スクラバー内のクリックでは復帰しない", () => {
+  it("スクラブ中にスクロールしてもライブに復帰しない", () => {
     slide("1");
-    range.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+    pointer("pointerdown", hero(), 0, 300);
+    pointer("pointermove", hero(), 0, 120);
+    pointer("pointerup", hero(), 0, 120);
+    expect(ends).toBe(0);
+    expect(document.body.classList.contains("is-scrubbing")).toBe(true);
+  });
+
+  it("ポインタがキャンセルされてもライブに復帰しない", () => {
+    slide("1");
+    pointer("pointerdown", hero(), 0, 300);
+    pointer("pointercancel", hero(), 0, 300);
+    pointer("pointerup", hero(), 0, 300);
+    expect(ends).toBe(0);
+  });
+
+  it("スクロールが起きたらそのポインタでは復帰しない", () => {
+    slide("1");
+    pointer("pointerdown", hero(), 0, 300);
+    window.dispatchEvent(new Event("scroll"));
+    pointer("pointerup", hero(), 0, 300);
+    expect(ends).toBe(0);
+  });
+
+  it("スクラバー内のタップでは復帰しない", () => {
+    slide("1");
+    pointer("pointerdown", range);
+    pointer("pointerup", range);
     expect(ends).toBe(0);
   });
 
@@ -97,10 +142,9 @@ describe("setupScrubber", () => {
     expect(ends).toBe(1);
   });
 
-  it("スクラブしていないときのクリックは何も通知しない", () => {
-    document
-      .querySelector("[data-id]")!
-      .dispatchEvent(new Event("pointerdown", { bubbles: true }));
+  it("スクラブしていないときのタップは何も通知しない", () => {
+    pointer("pointerdown", hero());
+    pointer("pointerup", hero());
     expect(ends).toBe(0);
   });
 });
