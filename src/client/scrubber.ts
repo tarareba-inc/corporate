@@ -3,6 +3,8 @@ import { foldEvents } from "../shared/state";
 import type { WorldState } from "../shared/state";
 import { renderWorld } from "./dom";
 
+const TAP_SLOP_PX = 10;
+
 type Deps = {
   events: StoredEvent[];
   elements: Map<string, HTMLElement>;
@@ -56,13 +58,38 @@ export function setupScrubber(deps: Deps): {
     if (Number(range.value) >= deps.events.length) returnToLive();
   });
 
-  const onPointerDown = (e: Event) => {
-    if (!scrubbing) return;
+  let tapStart: { x: number; y: number } | null = null;
+  const cancelTap = () => {
+    tapStart = null;
+  };
+  const isTap = (e: PointerEvent) =>
+    Math.hypot(e.clientX - tapStart!.x, e.clientY - tapStart!.y) <=
+    TAP_SLOP_PX;
+
+  const onPointerDown = (e: PointerEvent) => {
+    tapStart = null;
+    if (!scrubbing || !e.isPrimary) return;
     const target = e.target as HTMLElement;
     if (target.closest?.("#scrubber")) return;
-    returnToLive();
+    tapStart = { x: e.clientX, y: e.clientY };
   };
+
+  const onPointerMove = (e: PointerEvent) => {
+    if (tapStart && !isTap(e)) tapStart = null;
+  };
+
+  const onPointerUp = (e: PointerEvent) => {
+    if (!tapStart) return;
+    const tapped = isTap(e);
+    tapStart = null;
+    if (tapped) returnToLive();
+  };
+
   document.addEventListener("pointerdown", onPointerDown, true);
+  document.addEventListener("pointermove", onPointerMove, true);
+  document.addEventListener("pointerup", onPointerUp, true);
+  document.addEventListener("pointercancel", cancelTap, true);
+  window.addEventListener("scroll", cancelTap, { passive: true });
 
   liveButton.addEventListener("click", returnToLive);
 
@@ -70,6 +97,10 @@ export function setupScrubber(deps: Deps): {
     onEventsGrown: sync,
     destroy: () => {
       document.removeEventListener("pointerdown", onPointerDown, true);
+      document.removeEventListener("pointermove", onPointerMove, true);
+      document.removeEventListener("pointerup", onPointerUp, true);
+      document.removeEventListener("pointercancel", cancelTap, true);
+      window.removeEventListener("scroll", cancelTap);
       document.body.classList.remove("is-scrubbing");
     },
   };
