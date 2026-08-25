@@ -26,6 +26,25 @@ export const ELEMENT_IDS = [
 
 export type ElementId = (typeof ELEMENT_IDS)[number];
 
+export const TEXT_RULES: Partial<
+  Record<ElementId, { pattern: RegExp; hint: string }>
+> = {
+  "contact-email": {
+    pattern: /^[A-Za-z0-9._%+-]+@tarareba\.com$/i,
+    hint: "……@tarareba.com の形にしてください",
+  },
+  "repo-url": {
+    pattern: /^github\.com\/[A-Za-z0-9._~/-]*$/i,
+    hint: "github.com/…… の形にしてください",
+  },
+};
+
+export function textRuleHint(target: string, text: string): string | null {
+  const rule = TEXT_RULES[target as ElementId];
+  if (!rule || rule.pattern.test(text)) return null;
+  return rule.hint;
+}
+
 export const MAX_TEXT_LENGTH = 120;
 export const MAX_OFFSET = 4000;
 export const MIN_SCALE = 0.2;
