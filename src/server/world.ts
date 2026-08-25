@@ -1,5 +1,5 @@
 import { DurableObject } from "cloudflare:workers";
-import { validateEvent } from "../shared/events";
+import { textRuleHint, validateEvent } from "../shared/events";
 import { insertEvent, loadEvents } from "./db";
 import { EventCache } from "./history";
 import { SlidingWindowLimiter } from "./limiter";
@@ -76,6 +76,16 @@ export class World extends DurableObject<Env> {
     const ev = validateEvent((parsed as { event?: unknown }).event);
     if (!ev) {
       ws.send(JSON.stringify({ kind: "rejected", reason: "invalid" }));
+      return;
+    }
+    if (ev.type === "setText" && textRuleHint(ev.target, ev.text)) {
+      ws.send(
+        JSON.stringify({
+          kind: "rejected",
+          reason: "text_rule",
+          target: ev.target,
+        }),
+      );
       return;
     }
     const { ip } = (ws.deserializeAttachment() ?? { ip: "unknown" }) as {

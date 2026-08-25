@@ -52,3 +52,23 @@ describe("rowToStoredEvent", () => {
     ).toBeNull();
   });
 });
+
+describe("テキストのルールと履歴", () => {
+  it("ルールに反する過去のsetText行も復元する", () => {
+    expect(
+      rowToStoredEvent({
+        id: 316,
+        ts: 1787000000000,
+        type: "setText",
+        target: "repo-url",
+        payload: '{"text":"github.cam/tarareba-inc/corporate"}',
+      }),
+    ).toEqual({
+      id: 316,
+      ts: 1787000000000,
+      type: "setText",
+      target: "repo-url",
+      text: "github.cam/tarareba-inc/corporate",
+    });
+  });
+});

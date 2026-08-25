@@ -7,6 +7,21 @@ TARAREBA株式会社のコーポレートサイト。すべての要素は誰で
 - `bun run typecheck` — 型チェック
 - `bun run deploy` — ビルドとデプロイ
 
+## テキストの制約
+
+`contact-email` と `repo-url` だけは、書き換え後のテキストがドメインを保つ形であることを求める
+（`src/shared/events.ts` の `TEXT_RULES`）。誰でも書き換えられるという性質は保ったまま、
+連絡先とリポジトリの行き先だけを乗っ取られないようにするための制約。
+
+```
+contact-email: ……@tarareba.com
+repo-url:      github.com/……
+```
+
+パス部・ローカル部を ASCII に限っているのは、同形異字や矢印で視覚的な誘導を作れないようにするため。
+判定は `validateEvent` ではなく `world.ts` の受け口に置いている。`validateEvent` に入れると
+D1 から読み直した過去のイベントも弾かれ、履歴が変わってしまうため。
+
 ## モデレーション
 
 編集はすべて D1 の `events` テーブルに追記される。問題のある編集はイベントを消せばその編集だけ歴史から消える。

@@ -220,3 +220,57 @@ describe("テキスト編集中のキー操作", () => {
     expect(el.classList.contains("is-selected")).toBe(true);
   });
 });
+
+describe("テキストのルール", () => {
+  let repoEl: HTMLElement;
+
+  beforeEach(() => {
+    document.body.innerHTML = `<p><span data-id="repo-url">github.com/tarareba-inc/corporate</span></p>`;
+    repoEl = document.querySelector<HTMLElement>("[data-id]")!;
+    sent = [];
+    state = new Map();
+    editor.destroy();
+    editor = new Editor({
+      elements: new Map([["repo-url", repoEl]]),
+      defaults: new Map([["repo-url", "github.com/tarareba-inc/corporate"]]),
+      getState: () => state,
+      send: (ev) => sent.push(ev),
+    });
+    editor.enable();
+    repoEl.dispatchEvent(
+      new MouseEvent("dblclick", { bubbles: true, cancelable: true }),
+    );
+  });
+
+  it("ルールに反するテキストを送らない", () => {
+    repoEl.textContent = "github.cam/tarareba-inc/corporate";
+    repoEl.dispatchEvent(kev("Enter"));
+    expect(sent).toEqual([]);
+  });
+
+  it("ルールに反するテキストは元に戻す", () => {
+    repoEl.textContent = "github.cam/tarareba-inc/corporate";
+    repoEl.dispatchEvent(kev("Enter"));
+    expect(repoEl.textContent).toBe("github.com/tarareba-inc/corporate");
+  });
+
+  it("ルールに反するテキストでヒントを出す", () => {
+    repoEl.textContent = "github.cam/tarareba-inc/corporate";
+    repoEl.dispatchEvent(kev("Enter"));
+    expect(document.querySelector(".editor-hint")?.textContent).toBeTruthy();
+  });
+
+  it("ルールを満たすテキストは送る", () => {
+    repoEl.textContent = "github.com/tarareba-inc/other";
+    repoEl.dispatchEvent(kev("Enter"));
+    expect(sent).toEqual([
+      { type: "setText", target: "repo-url", text: "github.com/tarareba-inc/other" },
+    ]);
+  });
+
+  it("ルールを満たすテキストではヒントを出さない", () => {
+    repoEl.textContent = "github.com/tarareba-inc/other";
+    repoEl.dispatchEvent(kev("Enter"));
+    expect(document.querySelector(".editor-hint")).toBeNull();
+  });
+});

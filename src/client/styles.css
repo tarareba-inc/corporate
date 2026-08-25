@@ -237,6 +237,19 @@ body:not(.is-scrubbing) #scrubber-live {
   -webkit-user-select: none;
 }
 
+.editor-hint {
+  position: fixed;
+  max-width: min(20rem, calc(100vw - 2rem));
+  padding: 0.4rem 0.7rem;
+  border-radius: 4px;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  z-index: 20;
+  pointer-events: none;
+}
+
 @media (max-width: 480px) {
   main {
     padding-top: 4.5rem;

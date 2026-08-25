@@ -5,6 +5,7 @@ import {
   MAX_SCALE,
   MAX_TEXT_LENGTH,
   MIN_SCALE,
+  textRuleHint,
 } from "../shared/events";
 import type { ElementState, WorldState } from "../shared/state";
 import { initialElementState } from "../shared/state";
@@ -20,6 +21,7 @@ type Deps = {
 
 const DRAG_THRESHOLD_PX = 4;
 const DOUBLE_TAP_MS = 350;
+const HINT_MS = 4000;
 
 const clamp = (v: number, min: number, max: number) =>
   Math.min(max, Math.max(min, v));
@@ -40,6 +42,8 @@ export class Editor {
   private scaleHandle: HTMLElement;
   private lastTapId: string | null = null;
   private lastTapAt = 0;
+  private hint: HTMLElement | null = null;
+  private hintTimer: ReturnType<typeof setTimeout> | undefined;
   private onReposition = () => this.positionHandles();
   private onKeyDown = (e: KeyboardEvent) => {
     if (e.key === "Escape" && !isImeKey(e)) this.deselect();
@@ -70,6 +74,7 @@ export class Editor {
 
   destroy(): void {
     this.disable();
+    this.hideHint();
     document.removeEventListener("pointerdown", this.onPointerDown, true);
     document.removeEventListener("keydown", this.onKeyDown);
     window.removeEventListener("scroll", this.onReposition);
@@ -85,6 +90,25 @@ export class Editor {
     h.hidden = true;
     document.body.append(h);
     return h;
+  }
+
+  private showHint(el: HTMLElement, message: string): void {
+    this.hideHint();
+    const hint = document.createElement("div");
+    hint.className = "editor-hint";
+    hint.textContent = message;
+    const r = el.getBoundingClientRect();
+    hint.style.left = `${r.left}px`;
+    hint.style.top = `${r.bottom + 8}px`;
+    document.body.append(hint);
+    this.hint = hint;
+    this.hintTimer = setTimeout(() => this.hideHint(), HINT_MS);
+  }
+
+  private hideHint(): void {
+    clearTimeout(this.hintTimer);
+    this.hint?.remove();
+    this.hint = null;
   }
 
   private elState(id: string): ElementState {
@@ -280,6 +304,7 @@ export class Editor {
 
   private startTextEdit(id: string): void {
     if (!this.enabled) return;
+    this.hideHint();
     const el = this.deps.elements.get(id)!;
     this.select(id);
     try {
@@ -313,8 +338,12 @@ export class Editor {
     const current =
       this.deps.getState().get(id)?.text ?? this.deps.defaults.get(id) ?? "";
     renderTarget(el, this.deps.getState().get(id), this.deps.defaults.get(id) ?? "");
-    if (text !== current) {
-      this.deps.send({ type: "setText", target: id, text });
+    if (text === current) return;
+    const hint = textRuleHint(id, text);
+    if (hint) {
+      this.showHint(el, hint);
+      return;
     }
+    this.deps.send({ type: "setText", target: id, text });
   }
 }
