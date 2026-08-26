@@ -31,3 +31,19 @@ export function clampedOffset(
   const clampedCy = Math.max(halfH, cy);
   return { x: s.x + (clampedCx - cx), y: s.y + (clampedCy - cy) };
 }
+
+export type Viewport = { width: number; height: number };
+
+export function clampHandlePosition(
+  pos: { left: number; top: number },
+  size: number,
+  viewport: Viewport,
+  margin: number,
+): { left: number; top: number } {
+  const maxLeft = viewport.width - size - margin;
+  const maxTop = viewport.height - size - margin;
+  return {
+    left: Math.min(maxLeft, Math.max(margin, pos.left)),
+    top: Math.min(maxTop, Math.max(margin, pos.top)),
+  };
+}
