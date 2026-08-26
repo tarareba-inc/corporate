@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clampedOffset } from "./clamp";
+import { clampHandlePosition, clampedOffset } from "./clamp";
 
 const rect = { left: 100, top: 200, width: 200, height: 50 };
 const base = { x: 0, y: 0, scale: 1, rotation: 0 };
@@ -44,5 +44,36 @@ describe("clampedOffset", () => {
   it("幅がviewportを超えるときは中心が画面内に収まる位置まで許す", () => {
     const off = clampedOffset(rect, { ...base, scale: 8, x: 1300 }, VW);
     expect(off.x).toBeCloseTo(800);
+  });
+});
+
+describe("clampHandlePosition", () => {
+  const viewport = { width: 1000, height: 800 };
+  const size = 30;
+  const margin = 8;
+
+  it("画面内に収まっていれば補正しない", () => {
+    const pos = clampHandlePosition({ left: 100, top: 100 }, size, viewport, margin);
+    expect(pos).toEqual({ left: 100, top: 100 });
+  });
+
+  it("右にはみ出したら右端に収める", () => {
+    const pos = clampHandlePosition({ left: 990, top: 100 }, size, viewport, margin);
+    expect(pos.left).toBe(962);
+  });
+
+  it("左にはみ出したら左端に収める", () => {
+    const pos = clampHandlePosition({ left: -20, top: 100 }, size, viewport, margin);
+    expect(pos.left).toBe(8);
+  });
+
+  it("下にはみ出したら下端に収める", () => {
+    const pos = clampHandlePosition({ left: 100, top: 900 }, size, viewport, margin);
+    expect(pos.top).toBe(762);
+  });
+
+  it("上にはみ出したら上端に収める", () => {
+    const pos = clampHandlePosition({ left: 100, top: -46 }, size, viewport, margin);
+    expect(pos.top).toBe(8);
   });
 });
