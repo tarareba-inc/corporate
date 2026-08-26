@@ -149,6 +149,44 @@ describe("viewportクランプ", () => {
   });
 });
 
+describe("ハンドル位置", () => {
+  function fakeRect(rect: {
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+  }): void {
+    el.getBoundingClientRect = () =>
+      ({
+        ...rect,
+        right: rect.left + rect.width,
+        bottom: rect.top + rect.height,
+      }) as DOMRect;
+  }
+
+  function handles(): [HTMLElement, HTMLElement] {
+    const list = document.querySelectorAll<HTMLElement>(".editor-handle");
+    return [list[0]!, list[1]!];
+  }
+
+  it("要素がviewportより大きくてもscaleハンドルは画面内に置く", () => {
+    fakeRect({ left: -500, top: -500, width: 3000, height: 3000 });
+    el.dispatchEvent(pev("pointerdown", 10, 10));
+    el.dispatchEvent(pev("pointerup", 10, 10));
+    const [, scale] = handles();
+    expect(parseFloat(scale.style.left)).toBe(window.innerWidth - 38);
+    expect(parseFloat(scale.style.top)).toBe(window.innerHeight - 38);
+  });
+
+  it("要素がページ最上部にあっても回転ハンドルは画面内に置く", () => {
+    fakeRect({ left: 100, top: 0, width: 200, height: 50 });
+    el.dispatchEvent(pev("pointerdown", 10, 10));
+    el.dispatchEvent(pev("pointerup", 10, 10));
+    const [rotate] = handles();
+    expect(parseFloat(rotate.style.top)).toBe(8);
+  });
+});
+
 describe("タッチ操作", () => {
   it("1タップ目は選択のみでドラッグしない", () => {
     el.dispatchEvent(pev("pointerdown", 10, 10, "touch"));

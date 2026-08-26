@@ -9,8 +9,14 @@ import {
 } from "../shared/events";
 import type { ElementState, WorldState } from "../shared/state";
 import { initialElementState } from "../shared/state";
-import { clampedOffset } from "./clamp";
-import { layoutRect, renderTarget, transformCss, viewportWidth } from "./dom";
+import { clampHandlePosition, clampedOffset } from "./clamp";
+import {
+  layoutRect,
+  renderTarget,
+  transformCss,
+  viewportHeight,
+  viewportWidth,
+} from "./dom";
 
 type Deps = {
   elements: Map<string, HTMLElement>;
@@ -20,6 +26,8 @@ type Deps = {
 };
 
 const DRAG_THRESHOLD_PX = 4;
+const HANDLE_SIZE = 30;
+const HANDLE_MARGIN = 8;
 const DOUBLE_TAP_MS = 350;
 const HINT_MS = 4000;
 
@@ -181,10 +189,28 @@ export class Editor {
     if (!this.selectedId) return;
     const el = this.deps.elements.get(this.selectedId)!;
     const r = el.getBoundingClientRect();
-    this.rotateHandle.style.left = `${r.left + r.width / 2 - 15}px`;
-    this.rotateHandle.style.top = `${r.top - 46}px`;
-    this.scaleHandle.style.left = `${r.right + 8}px`;
-    this.scaleHandle.style.top = `${r.bottom + 8}px`;
+    this.placeHandle(this.rotateHandle, {
+      left: r.left + r.width / 2 - HANDLE_SIZE / 2,
+      top: r.top - HANDLE_SIZE - HANDLE_MARGIN * 2,
+    });
+    this.placeHandle(this.scaleHandle, {
+      left: r.right + HANDLE_MARGIN,
+      top: r.bottom + HANDLE_MARGIN,
+    });
+  }
+
+  private placeHandle(
+    handle: HTMLElement,
+    pos: { left: number; top: number },
+  ): void {
+    const p = clampHandlePosition(
+      pos,
+      HANDLE_SIZE,
+      { width: viewportWidth(), height: viewportHeight() },
+      HANDLE_MARGIN,
+    );
+    handle.style.left = `${p.left}px`;
+    handle.style.top = `${p.top}px`;
   }
 
   private startMoveDrag(

@@ -22,6 +22,10 @@ export function viewportWidth(): number {
   return document.documentElement.clientWidth || window.innerWidth;
 }
 
+export function viewportHeight(): number {
+  return document.documentElement.clientHeight || window.innerHeight;
+}
+
 export function layoutRect(el: HTMLElement): LayoutRect {
   let left = 0;
   let top = 0;
